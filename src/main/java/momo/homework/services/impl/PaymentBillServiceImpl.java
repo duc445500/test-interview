@@ -46,39 +46,44 @@ public class PaymentBillServiceImpl implements PaymentBillService {
 
     @Override
     public void payBills(long[] billId) {
-        //        this.availableBalance = BigDecimal.valueOf(1000000000);
-        this.getUnPaidBills().stream().filter(bill -> !bill.isPaid()).forEach(bill ->{
-            for (long id: billId) {
+        for (long id : billId) {
+            final String[] result = {""};
+            this.getUnPaidBills().stream().filter(bill -> !bill.isPaid()).forEach(bill -> {
                 if (bill.getId() == id) {
-                    if (customer.getAvailableBalance().compareTo(bill.getAmount()) >= 0) {
+                    if (customer.getAvailableBalance() >= bill.getAmount()) {
                         customer.payBills(bill);
-                        System.out.println("Payment has been completed for Bill with id " + billId);
+                        result[0] = "Payment has been completed for Bill with id " + bill.getId();
                     } else {
-                        System.out.println("Sorry! Not enough fund to proceed with payment.");
+                        result[0] = "Sorry! Not enough fund to proceed with payment.";
                     }
                 } else {
-                    System.out.println("Sorry! Not found a bill with such id");
+                    result[0] = "Sorry! Not found a bill with such id";
                 }
-            }
-        });
-        System.out.println("Your current balance is: " + customer.getAvailableBalance());
+            });
+            System.out.println(result[0]);
+        }
+        System.out.println("Your current balance is: " + customer.getAvailableBalance().longValue());
         InputOutputFileStream.storeCustomersToFile(customer);
     }
 
     @Override
     public void schedulePayBill(String billId, String dateString) {
-        if (billId != null && dateString != null && !dateString.isEmpty()){
-            try {
-                LocalDate dueDate = LocalDate.parse(dateString,dateTimeFormatter);
-                Bills bill = customer.getBills().stream().filter(billTemp -> billTemp.getId() == Long.parseLong(billId)).findFirst().get();
-                bill.setPaymentDate(dueDate);
-                System.out.println("Payment for bill id " + Long.parseLong(billId) + " is scheduled on " + dateString);
-                InputOutputFileStream.storeCustomersToFile(customer);
-            } catch (Exception e) {
-                System.out.println("Error occurred when trying to schedule for a bill");
+        if (billId != null) {
+            if (dateString != null && !dateString.isEmpty()) {
+                try {
+                    LocalDate dueDate = LocalDate.parse(dateString, dateTimeFormatter);
+                    Bills bill = customer.getBills().stream().filter(billTemp -> billTemp.getId() == Long.parseLong(billId)).findFirst().get();
+                    bill.setPaymentDate(dueDate);
+                    System.out.println("Payment for bill id " + Long.parseLong(billId) + " is scheduled on " + dateString);
+                    InputOutputFileStream.storeCustomersToFile(customer);
+                } catch (Exception e) {
+                    System.out.println("Error occurred when trying to schedule for a bill");
 //                log.debug(e.getMessage());
-            }
+                }
 
+            }
+        } else {
+            System.out.println("Sorry! Not found a bill with such id");
         }
     }
 
